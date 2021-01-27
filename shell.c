@@ -63,7 +63,9 @@ void freeShell(struct Shell* shell) {
 
 
 int handleShellArgument(char* shellArg, struct Shell* shell) {
-
+	if (*shellArg == 0) {
+		return 0;
+	}
 	struct Command* command = parseCommand(shellArg, shell);
 	if (command->isComment) {
 		freeCommand(command);

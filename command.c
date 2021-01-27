@@ -363,7 +363,6 @@ void handleAdvancedCommand(struct Command* command, struct Shell* shell) {
 		//this is the child
 		files = handleFiles(command);
 		if (files < 0) {
-			perror("File Error");
 			exit(EXIT_FAILURE);
 		}
 		execvp(command->command, newArgs);
@@ -394,11 +393,14 @@ void handleAdvancedCommandBackground(struct Command* command, struct Shell* shel
 		break;
 	case 0:
 		//this is the child
+		setDefaultStreams();
+		printf("this is a test");
 		files = handleFiles(command);
 		if (files < 0) {
-			perror("File Error");
 			exit(EXIT_FAILURE);
 		}
+		
+
 		execvp(command->command, newArgs);
 		perror(command->command);
 		exit(EXIT_FAILURE);
@@ -409,17 +411,30 @@ void handleAdvancedCommandBackground(struct Command* command, struct Shell* shel
 	freeNewArgs(command, newArgs);
 }
 
+void setDefaultStreams() {
+	int input = open("/dev/null", O_RDONLY);
+	int output = open("/dev/null", O_WRONLY | O_TRUNC | O_CREAT);
+	dup2(input, 0);
+	dup2(output, 1);
+}
+
 int handleFiles(struct Command* command) {
+	if (!(command->input_file) && !(command->output_file)) {
+		return 1;
+	}
 	if (command->input_file) {
 		int inputFile = open(command->input_file, O_RDONLY);
 		if (inputFile == -1) {
+			printf("cannot open %s for input\n", command->input_file);
 			return -1;
 		}
 		dup2( inputFile,0);
 	}
 	if (command->output_file) {
+		printf("assigning output file");
 		int output_file = open(command->output_file, O_WRONLY | O_TRUNC | O_CREAT);
 		if (output_file == -2) {
+			printf("cannot open %s for output\n", command->output_file);
 			return -2;
 		}
 		dup2(output_file,1);
