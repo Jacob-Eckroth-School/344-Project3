@@ -357,29 +357,37 @@ void handleAdvancedCommand(struct Command* command, struct Shell* shell) {
 	case 0:
 		//this is the child
 
-		 execvp(command->command, newArgs);
-		 perror("execvp");
-		 printf("about to exit bad shit \n");
+		execvp(command->command, newArgs);
+		perror(command->command);
 		exit(EXIT_FAILURE);
 		break;
 	default:
 		//this is the parent
+
 		spawnPid = waitpid(spawnPid, &childStatus, 0);
-	
-		if (WIFEXITED(childStatus) != 0) {
-			printf("exited normally\n");
-			shell->status = 0;
-		}
-		else {
-			shell->status = 1;
-		}
-		shell->lastExitedByStatus = true;
-		shell->lastExitedBySignal = false;
+		handleStatusSignal(childStatus, shell);
 	}
+	
 	freeNewArgs(command, newArgs);
 
 
 }
+
+void handleStatusSignal(int status, struct Shell* shell) {
+	if (WIFEXITED(status) != 0) {
+		shell->status = WEXITSTATUS(status);
+		shell->lastExitedByStatus = true;
+		shell->lastExitedBySignal = false;
+	}
+	else {
+		shell->status = WTERMSIG(status);
+		shell->lastExitedBySignal = true;
+		shell->lastExitedByStatus = false;
+	}
+}
+
+
+
 
 
 char** createArgsForExec(struct Command* command) {

@@ -49,4 +49,6 @@ void handleAdvancedCommand(struct Command*, struct Shell*);
 
 char** createArgsForExec(struct Command*);
 void freeNewArgs(struct Command*,char**);
+
+void handleStatusSignal(int, struct Shell*);
 #endif
