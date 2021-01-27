@@ -61,7 +61,7 @@ char* getUserStringInput(char* prompt, int bufSize) {
 	}
 
 	printf("%s",prompt);
-	getline(&input, &bufsize, stdin);
+  	getline(&input, &bufsize, stdin);
 	if(DEBUG){
 		printf("Full Dec of inputted string: ");
 		for(int i = 0; i < strlen(input); i++){

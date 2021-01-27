@@ -16,12 +16,13 @@ struct Shell {
 	int signalTerminated;
 	bool lastExitedByStatus;
 	bool lastExitedBySignal;
+	int backgroundProcessesRunning;
 };
 
 
 void shellInputLoop();
 
-int handleShellArgument(char* argument,struct Shell*);
+void handleShellArgument(char* argument,struct Shell*);
 
 
 

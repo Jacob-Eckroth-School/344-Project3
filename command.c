@@ -12,6 +12,12 @@
 
 #include <sys/stat.h>
 #include <fcntl.h>
+
+/*
+** Description: Prases a string and returns a command struct with all the data from the string
+** Prerequisites: command and shell are allocated
+** Updated/Returned: Returns an allocated command struct with all the data from the command in it
+*/
 struct Command* parseCommand(char* command, struct Shell* shell) {
 	assert(command);
 	char* expandedCommand = expandDollarSigns(command,shell);
@@ -19,12 +25,14 @@ struct Command* parseCommand(char* command, struct Shell* shell) {
 	struct Command* newCommand = malloc(sizeof(struct Command));
 	initializeCommand(newCommand);
 	assert(newCommand);
-	newCommand->isComment = false;
+	//fills in all data for command, based on a char* traveler that travels through the expandedCommand string
 	if (checkForComment(expandedCommand)) {
 		newCommand->isComment = true;
 	}
 	else {
+
 		setCommand(newCommand, &traveler);
+	
 		setArgs(newCommand, &traveler);
 		setInputFile(newCommand, &traveler);
 		setOutputFile(newCommand, &traveler);
@@ -38,8 +46,13 @@ struct Command* parseCommand(char* command, struct Shell* shell) {
 	return newCommand;
 }
 
-
+/*
+** Description: Initializes all the values for a new Command struct
+** Prerequisites: command is allocated
+** Updated/Returned: Initial state is set for the command.
+*/
 void initializeCommand(struct Command* command) {
+	assert(command);
 	command->command = NULL;
 	command->args = NULL;
 	command->amountOfArgs = 0;
@@ -49,8 +62,14 @@ void initializeCommand(struct Command* command) {
 	command->isComment = false;
 }
 
+/*
+** Description: Checks if the string passed to it begins with the COMMENTINDICATOR macro
+** Prerequisites: newCommand is allocated
+** Updated/Returned: True if the string begins as a comment, false otherwise.
+*/
 bool checkForComment(char* newCommand) {
-	if (strlen(newCommand) < strlen(COMMENTINDICATOR)) {
+	assert(newCommand);
+	if (strlen(newCommand) < strlen(COMMENTINDICATOR)) {		
 		return false;
 	}
 	if (strncmp(newCommand, COMMENTINDICATOR, strlen(COMMENTINDICATOR)) == 0) {
@@ -62,7 +81,14 @@ bool checkForComment(char* newCommand) {
 
 }
 
+
+/*
+** Description: Frees all data associated with a command struct
+** Prerequisites: command is allocateed
+** Updated/Returned: All data with associated with command is freed
+*/
 void freeCommand(struct Command* command) {
+	assert(command);
 	if (command->command) {
 		free(command->command);
 	}
@@ -79,29 +105,41 @@ void freeCommand(struct Command* command) {
 		free(command->output_file);
 	}
 
-
 	free(command);
 }
 
 
-
+/*
+** Description: Initializes the "command" part of the command struct
+** Prerequisites: command is allocated
+** Updated/Returned: currentLocationInString moved to one after the initial command, command is set within command
+*/
 void setCommand(struct Command* command, char** currentLocationInString) {
+	assert(command);
 	movePastWhiteSpace(currentLocationInString);
 	
+	//if there is no command i.e. we're at the end of the string
 	if (**currentLocationInString == 0) {
 		command = NULL;
 		return;
 	}
+	
+	//reads the command
 	char* commandString = readOneWord(currentLocationInString);
 
 	command->command = malloc(strlen(commandString) + 1);
 	strcpy(command->command, commandString);
 	
-	
 }
 
 
+/*
+** Description: Initializes the args part of the command
+** Prerequisites: command is allocated
+** Updated/Returned: currentLocationInString moved to one after the args, if there's args they are allocated within command
+*/
 void setArgs(struct Command* command, char** currentLocationInString) {
+	assert(command);
 	movePastWhiteSpace(currentLocationInString);
 	command->args = NULL;
 	command->amountOfArgs = 0;
@@ -115,22 +153,37 @@ void setArgs(struct Command* command, char** currentLocationInString) {
 		
 		argString = readOneWord(currentLocationInString);
 		(command->amountOfArgs)++;
+
+		//increases the size of args to hold the new argument
 		command->args = realloc(command->args, (sizeof(char*) * command->amountOfArgs));
 		(command->args)[command->amountOfArgs - 1] = malloc((strlen(argString) + 1) * sizeof(char));
-		strcpy((command->args)[command->amountOfArgs - 1], argString);		//invalid write here? idk why
+		strcpy((command->args)[command->amountOfArgs - 1], argString);		
+
+		//moves to the next arg
 		movePastWhiteSpace(currentLocationInString);
 	}
 
 }
 
+
+
+/*
+** Description: Initializes inputFile part of the command
+** Prerequisites: command is allocated
+** Updated/Returned: currentLocationInString moved to one after the input file, sets input_file in command struct
+*/
 void setInputFile(struct Command* command, char** currentLocationInString){
+	assert(command);
 	movePastWhiteSpace(currentLocationInString);
+
+	//if the first symbol isn't the file indicator
 	if (**currentLocationInString == 0 || **currentLocationInString != IN_FILE_INDICATOR) {
 		command->input_file = NULL;
 		return;
 	}
 	(*currentLocationInString += 1);
 	movePastWhiteSpace(currentLocationInString);
+	//if there's no file name
 	if (**currentLocationInString == 0){
 		command->input_file = NULL;
 		return;
@@ -142,29 +195,24 @@ void setInputFile(struct Command* command, char** currentLocationInString){
 	}	
 }
 
-char* readOneWord(char** currentLocationInString) {
-
-	int lengthLeft = strlen(*currentLocationInString);
-	char* saveptr = NULL;
-	char* commandString = strtok_r(*currentLocationInString, " ", &saveptr);
-	if (strlen(commandString) == lengthLeft) {
-		(*currentLocationInString) += strlen(commandString);	//to get to null
-	}
-	else {
-		(*currentLocationInString) += strlen(commandString) + 1;	//to get to next starting point
-	}
-	return commandString;
-}
-
-
+/*
+** Description: Initializes outputFile part of the command
+** Prerequisites: command is allocated
+** Updated/Returned: currentLocationInString moved to one after the output file, sets output_file in command struct
+*/
 void setOutputFile(struct Command* command, char** currentLocationInString) {
+	assert(command);
 	movePastWhiteSpace(currentLocationInString);
+
+	//if the next symbol isn't the out file indicator
 	if (**currentLocationInString == 0 || **currentLocationInString != OUT_FILE_INDICATOR) {
 		command->output_file = NULL;
 		return;
 	}
 	(*currentLocationInString += 1);
 	movePastWhiteSpace(currentLocationInString);
+
+	//if there's no out file name
 	if (**currentLocationInString == 0) {
 		command->output_file = NULL;
 		return;
@@ -175,17 +223,26 @@ void setOutputFile(struct Command* command, char** currentLocationInString) {
 		strcpy(command->output_file, outputFileString);
 	}
 }
+
+/*
+** Description: Sets whether the command should execute in the background or not
+** Prerequisites: command is allocated
+** Updated/Returned: currentLocationInString moved to one after the output file, updates background execute depending on whether the last character is a '&' or not
+*/
 void setBackgroundExecute(struct Command* command, char** currentLocationInString) {
 	movePastWhiteSpace(currentLocationInString);
 	if (**currentLocationInString == 0) {
 		command->background_execute = false;
 		return;
 	}
+	//if we're at the &
 	if (**currentLocationInString == BACKGROUND_INDICATOR) {
 		(*currentLocationInString) += 1;
-		if (**currentLocationInString == ' ' || **currentLocationInString == 0) {
+
+		//if there's nothing after the &
+		if (**currentLocationInString == ' ' || **currentLocationInString == 0 || **currentLocationInString == '\t') {
 			command->background_execute = true;
-			
+
 		}
 	}
 	else {
@@ -196,9 +253,32 @@ void setBackgroundExecute(struct Command* command, char** currentLocationInStrin
 
 
 
+/*
+** Description: Returns a char* to a string, either up to null or to a space. 
+** Prerequisites: currentLocation is pointing to something, hopefully a string
+** Updated/Returned: currentLocationString is updated along the string, and returns a pointer to the first word
+*/
+char* readOneWord(char** currentLocationInString) {
+
+	int lengthLeft = strlen(*currentLocationInString);
+	char* saveptr = NULL;
+	char* commandString = strtok_r(*currentLocationInString, " \t", &saveptr);
+	if (strlen(commandString) == lengthLeft) {		//if we end on the null terminator
+		(*currentLocationInString) += strlen(commandString);	//to get to null
+	}
+	else {		//if we end on a space
+		(*currentLocationInString) += strlen(commandString) + 1;	//to get to next starting point
+	}
+	return commandString;
+}
+
+
+
+
+
 
 void movePastWhiteSpace(char** currentLocationInString) {
-	while (**currentLocationInString == ' ' && **currentLocationInString != 0) {	//iterates through whitespace to first character
+	while ((**currentLocationInString == ' ' || **currentLocationInString == '\t') && **currentLocationInString != 0) {	//iterates through whitespace to first character
 		*currentLocationInString += 1;
 	}
 }
@@ -209,11 +289,11 @@ void movePastWhiteSpace(char** currentLocationInString) {
 char* expandDollarSigns(char* command, struct Shell* shell) {
 
 
-
-	
+		
 	assert(command);
-	int newSize = calculateNewSize(command,shell);
 
+	int newSize = calculateNewSize(command,shell);
+	
 	char* newCommand = malloc(sizeof(char) * newSize);
 
 	char* oldCommandIndexer = command;
@@ -315,6 +395,10 @@ void printCommand(struct Command* userCommand) {
 
 int isBasicCommand(struct Command* command, struct Shell* shell) {
 	assert(command);
+	if (!command->command) {
+		return 0;
+	}
+
 	if (strcmp(command->command, EXITCOMMAND) == 0) {
 		shell->isRunning = false;
 		return -1;				//-1 means end
@@ -336,6 +420,7 @@ int isBasicCommand(struct Command* command, struct Shell* shell) {
 		printStatus(shell);
 		return 0;
 	}
+	
 	return 1;
 
 
@@ -386,6 +471,7 @@ void handleAdvancedCommandBackground(struct Command* command, struct Shell* shel
 	
 	spawnPid = fork();
 	int files;
+	(shell->backgroundProcessesRunning)++;
 	switch (spawnPid) {
 	case -1:
 		perror("fork() failed!\n");
@@ -399,8 +485,6 @@ void handleAdvancedCommandBackground(struct Command* command, struct Shell* shel
 		if (files < 0) {
 			exit(EXIT_FAILURE);
 		}
-		
-
 		execvp(command->command, newArgs);
 		perror(command->command);
 		exit(EXIT_FAILURE);

@@ -2,11 +2,13 @@ build
 command.c
 command.h
 junk
+junk2
 main.c
 Makefile
 shell.c
 shell.h
 smallsh
+test.txt
 typeDefs.h
 usefulFunctions.c
 usefulFunctions.h
