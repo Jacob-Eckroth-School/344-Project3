@@ -53,7 +53,7 @@ int getLengthOfNumber(int number) {
 char* getUserStringInput(char* prompt, int bufSize) {
 	assert(prompt);
 	size_t bufsize = bufSize;
-	char* input;
+	char* input = NULL;
 
 	//if it's not zero, then we need to allocate it ourself. Otherwise getline will malloc it for us
     if(bufSize!=0){
