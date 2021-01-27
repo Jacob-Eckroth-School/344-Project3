@@ -8,13 +8,14 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <sys/wait.h> // for waitpid
 void shellInputLoop() {
 	struct Shell* shell = malloc(sizeof(struct Shell));
 	initShell(shell);
 	while (shell->isRunning) {
 		char* shellArg = getUserStringInput(": ", 0);
 		handleShellArgument(shellArg,shell);
-		
+		checkForZombies(shell);
 	}
 
 	freeShell(shell);
@@ -72,11 +73,26 @@ int handleShellArgument(char* shellArg, struct Shell* shell) {
 	
 	//gets set to 1 if it's not a basic command
 	if (status == 1) {
-		handleAdvancedCommand(command, shell);
+		if (command->background_execute) {
+			handleAdvancedCommandBackground(command, shell);
+		}
+		else {
+			handleAdvancedCommand(command, shell);
+		}
+	
 	}
 
 	freeCommand(command);
 	return status;
+}
+void checkForZombies(struct Shell* shell) {
+	int childStatus = 0;
+	pid_t childID = waitpid(-1, &childStatus, WNOHANG);
+	if (childID) {
+		handleStatusSignal(childStatus, shell);
+		printf("background pid %d is done: ", childID);
+		printStatus(shell);
+	}
 }
 
 

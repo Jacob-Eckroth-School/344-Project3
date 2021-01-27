@@ -32,6 +32,8 @@ void freeShell(struct Shell*);
 
 void printStatus();
 
+void checkForZombies(struct Shell*);
+
 
 #endif
 

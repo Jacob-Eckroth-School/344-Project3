@@ -345,6 +345,7 @@ int isBasicCommand(struct Command* command, struct Shell* shell) {
 void handleAdvancedCommand(struct Command* command, struct Shell* shell) {
 	char** newArgs = createArgsForExec(command);
 	
+	
 
 	pid_t spawnPid = 0;
 	int childStatus = 0;
@@ -369,8 +370,30 @@ void handleAdvancedCommand(struct Command* command, struct Shell* shell) {
 	}
 	
 	freeNewArgs(command, newArgs);
+}
 
 
+void handleAdvancedCommandBackground(struct Command* command, struct Shell* shell) {
+	char** newArgs = createArgsForExec(command);
+	pid_t spawnPid = 0;
+	
+	spawnPid = fork();
+	switch (spawnPid) {
+	case -1:
+		perror("fork() failed!\n");
+		exit(1);
+		break;
+	case 0:
+		//this is the child
+		
+		execvp(command->command, newArgs);
+		perror(command->command);
+		exit(EXIT_FAILURE);
+		break;
+	}
+	printf("background id is %d\n", spawnPid);
+
+	freeNewArgs(command, newArgs);
 }
 
 void handleStatusSignal(int status, struct Shell* shell) {

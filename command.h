@@ -45,10 +45,11 @@ bool checkForComment(char* command);
 void initializeCommand(struct Command*);
 
 void handleAdvancedCommand(struct Command*, struct Shell*);
-
+void handleAdvancedCommandBackground(struct Command*, struct Shell*);
 
 char** createArgsForExec(struct Command*);
 void freeNewArgs(struct Command*,char**);
 
 void handleStatusSignal(int, struct Shell*);
+
 #endif
