@@ -52,4 +52,6 @@ void freeNewArgs(struct Command*,char**);
 
 void handleStatusSignal(int, struct Shell*);
 
+int handleFiles(struct Command*);
+
 #endif

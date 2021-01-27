@@ -1,0 +1,12 @@
+build
+command.c
+command.h
+junk
+main.c
+Makefile
+shell.c
+shell.h
+smallsh
+typeDefs.h
+usefulFunctions.c
+usefulFunctions.h

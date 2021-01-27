@@ -88,7 +88,7 @@ int handleShellArgument(char* shellArg, struct Shell* shell) {
 void checkForZombies(struct Shell* shell) {
 	int childStatus = 0;
 	pid_t childID = waitpid(-1, &childStatus, WNOHANG);
-	if (childID) {
+	if (childID > 0) {
 		handleStatusSignal(childStatus, shell);
 		printf("background pid %d is done: ", childID);
 		printStatus(shell);

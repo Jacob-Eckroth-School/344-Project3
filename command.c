@@ -9,6 +9,9 @@
 #include <string.h>
 #include <sys/wait.h> // for waitpid
 #include "shell.h"
+
+#include <sys/stat.h>
+#include <fcntl.h>
 struct Command* parseCommand(char* command, struct Shell* shell) {
 	assert(command);
 	char* expandedCommand = expandDollarSigns(command,shell);
@@ -350,6 +353,7 @@ void handleAdvancedCommand(struct Command* command, struct Shell* shell) {
 	pid_t spawnPid = 0;
 	int childStatus = 0;
 	spawnPid = fork();
+	int files;
 	switch (spawnPid) {
 	case -1:
 		perror("fork() failed!\n");
@@ -357,7 +361,11 @@ void handleAdvancedCommand(struct Command* command, struct Shell* shell) {
 		break;
 	case 0:
 		//this is the child
-
+		files = handleFiles(command);
+		if (files < 0) {
+			perror("File Error");
+			exit(EXIT_FAILURE);
+		}
 		execvp(command->command, newArgs);
 		perror(command->command);
 		exit(EXIT_FAILURE);
@@ -378,6 +386,7 @@ void handleAdvancedCommandBackground(struct Command* command, struct Shell* shel
 	pid_t spawnPid = 0;
 	
 	spawnPid = fork();
+	int files;
 	switch (spawnPid) {
 	case -1:
 		perror("fork() failed!\n");
@@ -385,7 +394,11 @@ void handleAdvancedCommandBackground(struct Command* command, struct Shell* shel
 		break;
 	case 0:
 		//this is the child
-		
+		files = handleFiles(command);
+		if (files < 0) {
+			perror("File Error");
+			exit(EXIT_FAILURE);
+		}
 		execvp(command->command, newArgs);
 		perror(command->command);
 		exit(EXIT_FAILURE);
@@ -394,6 +407,26 @@ void handleAdvancedCommandBackground(struct Command* command, struct Shell* shel
 	printf("background id is %d\n", spawnPid);
 
 	freeNewArgs(command, newArgs);
+}
+
+int handleFiles(struct Command* command) {
+	if (command->input_file) {
+		int inputFile = open(command->input_file, O_RDONLY);
+		if (inputFile == -1) {
+			return -1;
+		}
+		dup2( inputFile,0);
+	}
+	if (command->output_file) {
+		int output_file = open(command->output_file, O_WRONLY | O_TRUNC | O_CREAT);
+		if (output_file == -2) {
+			return -2;
+		}
+		dup2(output_file,1);
+	}
+	return 0;
+
+
 }
 
 void handleStatusSignal(int status, struct Shell* shell) {
