@@ -12,7 +12,7 @@ void toggleBackground(int sigNumber) {
 
 	background_enabled = !background_enabled;
 	if (background_enabled) {
-		write(STDOUT_FILENO, "\nExiting foregroud-only mode\n:", 31);
+		write(STDOUT_FILENO, "\nExiting foreground-only mode\n:", 31);
 	}
 	else {
 		write(STDOUT_FILENO, "\nEntering foreground-only mode (& is now ignored)\n:", 52);

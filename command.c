@@ -505,7 +505,7 @@ void handleAdvancedCommandBackground(struct Command* command, struct Shell* shel
 		_exit(EXIT_FAILURE);
 		break;
 	}
-	printf("background id is %d\n", spawnPid);
+	printf("background pid is %d\n", spawnPid);
 
 	freeNewArgs(command, newArgs);
 }
