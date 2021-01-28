@@ -9,7 +9,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/wait.h> // for waitpid
-
+#include "signals.h"
 
 
 /*
@@ -20,12 +20,14 @@
 void shellInputLoop() {
 	struct Shell* shell = malloc(sizeof(struct Shell));
 	initShell(shell);
-
+	initializeParentSignalHandler();
 	//infinite loop until user enters exit
 	while (shell->isRunning) {
-		
+
+		if (DEBUG)
+			printf("waiting for user input\n");
 		char* shellArg = getUserStringInput(": ", 0);
-	
+		if(DEBUG) printf("got user input\n");
 		handleShellArgument(shellArg,shell);
 		checkForZombies(shell);		//checks for any finished background proccesses
 	}
@@ -89,8 +91,14 @@ void freeShell(struct Shell* shell) {
 ** Updated/Returned: Handles and parses argument sent to shell.
 */
 void handleShellArgument(char* shellArg, struct Shell* shell) {
+	if (DEBUG)
+		printf("Handling shell argument \n");
 	assert(shell);
-
+	if (shellArg == NULL) {
+		if (DEBUG)
+			printf("no shell argument\n");
+		return;
+	}
 	//if it's an empty string
 	if (*shellArg == 0) {
 		return;
@@ -135,7 +143,7 @@ void checkForZombies(struct Shell* shell) {
 
 		//if it's ended print the status
 		if (childID > 0) {
-			handleStatusSignal(childStatus, shell);
+			handleStatusSignal(childStatus, shell,true);
 			printf("background pid %d is done: ", childID);
 			printStatus(shell);
 			(shell->backgroundProcessesRunning)--;
@@ -159,6 +167,6 @@ void printStatus(struct Shell* shell) {
 		printf("%s %d\n", EXIT_STATUS_STRING, shell->status);
 	}
 	else if (shell->lastExitedBySignal) {
-		printf("%s %d\n", TERMINATED_STRING, shell->signalTerminated);
+		printf("%s %d\n", TERMINATED_STRING, shell->status);
 	}
 }

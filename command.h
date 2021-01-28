@@ -50,7 +50,7 @@ void handleAdvancedCommandBackground(struct Command*, struct Shell*);
 char** createArgsForExec(struct Command*);
 void freeNewArgs(struct Command*,char**);
 
-void handleStatusSignal(int, struct Shell*);
+void handleStatusSignal(int, struct Shell*,bool background);
 
 int handleFiles(struct Command*);
 void setDefaultStreams();

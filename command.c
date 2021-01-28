@@ -2,14 +2,15 @@
 #include "usefulFunctions.h"
 #include <assert.h>
 #include <sys/types.h>
-#include <unistd.h> 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "typeDefs.h"
+#include "globals.h"
 #include <string.h>
 #include <sys/wait.h> // for waitpid
 #include "shell.h"
-
+#include "signals.h"
 #include <sys/stat.h>
 #include <fcntl.h>
 
@@ -230,7 +231,13 @@ void setOutputFile(struct Command* command, char** currentLocationInString) {
 ** Updated/Returned: currentLocationInString moved to one after the output file, updates background execute depending on whether the last character is a '&' or not
 */
 void setBackgroundExecute(struct Command* command, char** currentLocationInString) {
+	if (!background_enabled) {
+		command->background_execute = false;
+		return;
+	}
 	movePastWhiteSpace(currentLocationInString);
+	
+
 	if (**currentLocationInString == 0) {
 		command->background_execute = false;
 		return;
@@ -446,19 +453,27 @@ void handleAdvancedCommand(struct Command* command, struct Shell* shell) {
 		break;
 	case 0:
 		//this is the child
+		initializeChildSignalHandler();
+		initializeChildForegroundSignalHandler();
 		files = handleFiles(command);
+
 		if (files < 0) {
 			exit(EXIT_FAILURE);
 		}
+
+	
 		execvp(command->command, newArgs);
 		perror(command->command);
-		exit(EXIT_FAILURE);
+		_exit(EXIT_FAILURE);
 		break;
 	default:
 		//this is the parent
-
+		
 		spawnPid = waitpid(spawnPid, &childStatus, 0);
-		handleStatusSignal(childStatus, shell);
+		
+		if (DEBUG)
+			printf("process is finished, status is: %d", childStatus);
+		handleStatusSignal(childStatus, shell,false);
 	}
 	
 	freeNewArgs(command, newArgs);
@@ -480,14 +495,14 @@ void handleAdvancedCommandBackground(struct Command* command, struct Shell* shel
 	case 0:
 		//this is the child
 		setDefaultStreams();
-		printf("this is a test");
+		initializeChildSignalHandler();
 		files = handleFiles(command);
 		if (files < 0) {
 			exit(EXIT_FAILURE);
 		}
 		execvp(command->command, newArgs);
 		perror(command->command);
-		exit(EXIT_FAILURE);
+		_exit(EXIT_FAILURE);
 		break;
 	}
 	printf("background id is %d\n", spawnPid);
@@ -497,7 +512,7 @@ void handleAdvancedCommandBackground(struct Command* command, struct Shell* shel
 
 void setDefaultStreams() {
 	int input = open("/dev/null", O_RDONLY);
-	int output = open("/dev/null", O_WRONLY | O_TRUNC | O_CREAT);
+	int output = open("/dev/null", O_WRONLY | O_TRUNC | O_CREAT,FILE_PERMISSIONS);
 	dup2(input, 0);
 	dup2(output, 1);
 }
@@ -507,7 +522,7 @@ int handleFiles(struct Command* command) {
 		return 1;
 	}
 	if (command->input_file) {
-		int inputFile = open(command->input_file, O_RDONLY);
+		int inputFile = open(command->input_file, O_RDONLY,FILE_PERMISSIONS);
 		if (inputFile == -1) {
 			printf("cannot open %s for input\n", command->input_file);
 			return -1;
@@ -515,29 +530,44 @@ int handleFiles(struct Command* command) {
 		dup2( inputFile,0);
 	}
 	if (command->output_file) {
-		printf("assigning output file");
-		int output_file = open(command->output_file, O_WRONLY | O_TRUNC | O_CREAT);
-		if (output_file == -2) {
+		if (DEBUG)
+			printf("assigning output file\n");
+		int output_file = open(command->output_file, O_WRONLY | O_TRUNC | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+		if (output_file == -1) {
 			printf("cannot open %s for output\n", command->output_file);
-			return -2;
+			return -1;
 		}
 		dup2(output_file,1);
+
 	}
 	return 0;
 
 
 }
 
-void handleStatusSignal(int status, struct Shell* shell) {
+void handleStatusSignal(int status, struct Shell* shell,bool background) {
 	if (WIFEXITED(status) != 0) {
+		if (DEBUG) {
+			printf("exited normally\n");
+		}
 		shell->status = WEXITSTATUS(status);
 		shell->lastExitedByStatus = true;
 		shell->lastExitedBySignal = false;
+		
 	}
 	else {
+		if (DEBUG)
+			printf("exited with signal\n");
 		shell->status = WTERMSIG(status);
 		shell->lastExitedBySignal = true;
 		shell->lastExitedByStatus = false;
+		if (DEBUG)
+			printf("Status: %d\n", shell->status);
+		if (!background) {
+			printStatus(shell);
+		}
+		
+		
 	}
 }
 

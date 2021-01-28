@@ -15,6 +15,7 @@
 #define BACKGROUND_INDICATOR '&'
 #define EXIT_STATUS_STRING "exit value"
 #define TERMINATED_STRING "terminated by signal"
+#define FILE_PERMISSIONS 0777
 
 
 #endif

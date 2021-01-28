@@ -8,14 +8,14 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
- 
+
 /*
 ** Description: checks to see if a string has a certain suffix
 ** Prerequisites: suffix and the string to check against are allocated
-** Updated/Returned: True if the string has the suffix, false if it doesn't 
+** Updated/Returned: True if the string has the suffix, false if it doesn't
 */
 bool checkSuffix(char* suffix, char* stringToCheckAgainst) {
-	assert(suffix); 
+	assert(suffix);
 	assert(stringToCheckAgainst);
 
 	//if the string is longer than the actual string yaknow.
@@ -51,23 +51,34 @@ int getLengthOfNumber(int number) {
 ** Updated/Returned: Returns a pointer to the user entered string
 */
 char* getUserStringInput(char* prompt, int bufSize) {
+	fflush(stdin);
+
 	assert(prompt);
 	size_t bufsize = bufSize;
 	char* input = NULL;
 
 	//if it's not zero, then we need to allocate it ourself. Otherwise getline will malloc it for us
-    if(bufSize!=0){
+	if (bufSize != 0) {
 		input = (char*)malloc(bufsize * (sizeof(char)));
 	}
 
-	printf("%s",prompt);
-  	getline(&input, &bufsize, stdin);
-	if(DEBUG){
+	printf("%s", prompt);
+
+	
+	getline(&input, &bufsize, stdin);
+	if (input == NULL) {
+		return NULL;
+	}
+	
+	if (DEBUG) {
 		printf("Full Dec of inputted string: ");
-		for(int i = 0; i < strlen(input); i++){
-			printf("%d ",input[i]);
+		for (int i = 0; i < strlen(input); i++) {
+			printf("%d ", input[i]);
 		}
 		printf("\n");
+	}
+	if (strlen(input) == 0){
+		return NULL;
 	}
 	//if there's a newline character left over in the user input
 	if (input[strlen(input) - 1] == 10) {

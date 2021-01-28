@@ -1,12 +1,15 @@
 build
 command.c
 command.h
+globals.c
+globals.h
 junk
-junk2
 main.c
 Makefile
 shell.c
 shell.h
+signals.c
+signals.h
 smallsh
 test.txt
 typeDefs.h
