@@ -590,7 +590,7 @@ int handleFiles(struct Command* command) {
 	}
 
 	if (command->input_file) {
-		int inputFile = open(command->input_file, O_RDONLY,FILE_PERMISSIONS);
+		int inputFile = open(command->input_file, O_RDONLY);
 		if (inputFile < 0) {
 			printf("cannot open %s for input\n", command->input_file);
 			return inputFile;
@@ -636,7 +636,7 @@ void setDefaultInput() {
 ** Updated/Returned: stdout is reassigned to null
 */
 void setDefaultOutput() {
-	int output = open("/dev/null", O_WRONLY | O_TRUNC | O_CREAT, FILE_PERMISSIONS);
+	int output = open("/dev/null", O_WRONLY | O_TRUNC | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
 	dup2(output, 1);
 }
 
