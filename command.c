@@ -283,7 +283,11 @@ char* readOneWord(char** currentLocationInString) {
 
 
 
-
+/*
+** Description: Increments a char* until it is either at the end of a string, or not on a space or a tab
+** Prerequisites: CurrentlocationInString is allocated and pointing at something
+** Updated/Returned: char* currentLocationInString is pointing at the next non-whitespace character
+*/
 void movePastWhiteSpace(char** currentLocationInString) {
 	while ((**currentLocationInString == ' ' || **currentLocationInString == '\t') && **currentLocationInString != 0) {	//iterates through whitespace to first character
 		*currentLocationInString += 1;
@@ -292,13 +296,18 @@ void movePastWhiteSpace(char** currentLocationInString) {
 
 
 
-
+/*
+** Description: Takes in a string and replaces every instance of "$$" within the string with the pid of the shell
+** Prerequisites: command is allocated, and shell is allocated
+** Updated/Returned: frees the memory pointed to by command, returns the new string with the '$$'s replaced with the pid
+*/
 char* expandDollarSigns(char* command, struct Shell* shell) {
 
 
 		
 	assert(command);
 
+	//returns the required string size of the new string, including null terminator.
 	int newSize = calculateNewSize(command,shell);
 	
 	char* newCommand = malloc(sizeof(char) * newSize);
@@ -306,7 +315,9 @@ char* expandDollarSigns(char* command, struct Shell* shell) {
 	char* oldCommandIndexer = command;
 	char* newCommandIndexer = newCommand;
 
+	//iterates through the old string until we get to the null terminator.
 	while (*oldCommandIndexer) {
+		//tests if we're at the start of a double dollar
 		if (startOfDoubleDollar(oldCommandIndexer)) {
 			oldCommandIndexer += 2;
 			for (int i = 0; i < strlen(shell->pidString); i++) {
@@ -314,7 +325,7 @@ char* expandDollarSigns(char* command, struct Shell* shell) {
 				newCommandIndexer += 1;
 			}
 		}
-		else {
+		else {	//if we're not at the start of $$ then just iterate through both strings normally.
 			*newCommandIndexer = *oldCommandIndexer;
 			newCommandIndexer += 1;
 			oldCommandIndexer += 1;
@@ -330,24 +341,35 @@ char* expandDollarSigns(char* command, struct Shell* shell) {
 
 
 
-
+/*
+** Description: Returns true if the character being pointed to is a '$' and the next character is also a '$'
+** Prerequisites: currentCommandIndexer is allocated.
+** Updated/Returned: True if first 2 characters of string are '$$' false otherwise
+*/
 bool startOfDoubleDollar(char* currentCommandIndexer) {
-	if (strlen(currentCommandIndexer) <= 1) {	//guaranteeing we're not at the end of the string, so the worst we'll access is a null terminator
+	assert(currentCommandIndexer);
+	//if length of string is <= 1 then there is no way it's the start of a $$
+	if (strlen(currentCommandIndexer) <= 1) {	
 		return false;
 	}
+
+	//worst case, currentCommandIndexer[1] = 0 which is totally fine
 	if (currentCommandIndexer[0] == '$' && currentCommandIndexer[1] == '$') {
 		return true;
 	}
 	return false;
-
-
-
-
 }
 
 
-
+/*
+** Description: Calculates the new required byte space for a string with the '$$'s in the original command expanded
+**				to be the size of the pid
+** Prerequisites: Command is allocated, shell is allocated
+** Updated/Returned: Returns the size required for the $$ expanded string
+*/
 int calculateNewSize(char* command, struct Shell* shell) {
+	assert(command);
+	assert(shell);
 	int initialSize = strlen(command) + 1;			//plus one for null character
 	int amountOfDoubleDollarSigns = 0;
 	bool firstDollarSignFound = false;
@@ -358,7 +380,7 @@ int calculateNewSize(char* command, struct Shell* shell) {
 				amountOfDoubleDollarSigns++;
 				
 			}
-			firstDollarSignFound = false;
+			firstDollarSignFound = false;		//If the first dollar sign was found, and the next character isn't a dollar sign, then we reset our search
 		}else if (command[i] == '$') {
 			firstDollarSignFound = true;
 		}
@@ -369,6 +391,12 @@ int calculateNewSize(char* command, struct Shell* shell) {
 	return finalSize;
 }
 
+
+/*
+** Description: Prints the contents of a command for debugging purposes
+** Prerequisites: userCommand is allocated
+** Updated/Returned: Prints out information about the contents of userCommand
+*/
 void printCommand(struct Command* userCommand) {
 	assert(userCommand);
 	if (userCommand->command) {
@@ -400,6 +428,11 @@ void printCommand(struct Command* userCommand) {
 
 }
 
+/*
+** Description: Returns 1 if the command is not one of our basic commands handled by the shell. Returns -1 if the user wants to end, returns 0 otherwise 
+** Prerequisites: userCommand is allocated
+** Updated/Returned: Prints out information about the contents of userCommand
+*/
 int isBasicCommand(struct Command* command, struct Shell* shell) {
 	assert(command);
 	if (!command->command) {
@@ -410,19 +443,12 @@ int isBasicCommand(struct Command* command, struct Shell* shell) {
 		shell->isRunning = false;
 		return -1;				//-1 means end
 	}
+	//change directory commmand
 	else if (strcmp(command->command, CDCOMMAND) == 0) {
-		if (command->amountOfArgs == 0) {
-			chdir(shell->homeDirectory);
-		}
-		else {
-			chdir((command->args)[0]);
-		}
-		if (shell->cwd) {
-			free(shell->cwd);
-		}
-		shell->cwd = getcwd(NULL, 0);
+		changeDirectory(command, shell);
 		return 0;
 	}
+	// status command.
 	else if (strcmp(command->command, STATUSCOMMAND) == 0) {
 		printStatus(shell);
 		return 0;
@@ -433,11 +459,37 @@ int isBasicCommand(struct Command* command, struct Shell* shell) {
 
 }
 
+/*
+** Description: Changes directory based on arguments in command struct.
+** Prerequisites: Command is allocated, shell is allocated, homeDirectory is defined.
+** Updated/Returned: Directory is changed appropriately.
+*/
+void changeDirectory(struct Command* command, struct Shell* shell) {
+	assert(command);
+	assert(shell);
+	if (command->amountOfArgs == 0) {
+		chdir(shell->homeDirectory);
+	}
+	else {
+		chdir((command->args)[0]);
+	}
+	if (shell->cwd) {
+		free(shell->cwd);
+	}
+	shell->cwd = getcwd(NULL, 0);
+}
 
 
 
-
+/*
+** Description: Handles any nonbasic foreground commands by passing them to exec() functions.
+** Prerequisites: Command is allocated, shell is allocated
+** Updated/Returned: User-specified command is run.
+*/
 void handleAdvancedCommand(struct Command* command, struct Shell* shell) {
+	assert(command);
+	assert(shell);
+	//sets up the new args array with the program name at the beginning and NULL at the end
 	char** newArgs = createArgsForExec(command);
 	
 	
@@ -452,35 +504,46 @@ void handleAdvancedCommand(struct Command* command, struct Shell* shell) {
 		exit(1);
 		break;
 	case 0:
-		//this is the child
+		//Sets up child signal handlers.
+		files = handleFiles(command);
 		initializeChildSignalHandler();
 		initializeChildForegroundSignalHandler();
-		files = handleFiles(command);
-
+		//deals with redirecting files if there are files to be redirected
+		//if this returns less than 0 then there was an error
 		if (files < 0) {
 			exit(EXIT_FAILURE);
 		}
+		execvp(newArgs[0], newArgs);
 
-	
-		execvp(command->command, newArgs);
+		//if we messed up, print why we messed up
 		perror(command->command);
 		_exit(EXIT_FAILURE);
 		break;
 	default:
 		//this is the parent
 		
+
 		spawnPid = waitpid(spawnPid, &childStatus, 0);
 		
 		if (DEBUG)
 			printf("process is finished, status is: %d", childStatus);
+
+		//assigns status signal to shell based on how the process exited.
 		handleStatusSignal(childStatus, shell,false);
 	}
-	
+	//frees the allocated arguments because reasons.
 	freeNewArgs(command, newArgs);
 }
 
-
+/*
+** Description: Handles any nonbasic background commands by passing them to exec() functions.
+** Prerequisites: Command is allocated, shell is allocated
+** Updated/Returned: User-specified command is run in the background.
+*/
 void handleAdvancedCommandBackground(struct Command* command, struct Shell* shell) {
+	assert(command);
+	assert(shell);
+	//sets up the new args array with the program name at the beginning and NULL at the end
 	char** newArgs = createArgsForExec(command);
 	pid_t spawnPid = 0;
 	
@@ -494,13 +557,14 @@ void handleAdvancedCommandBackground(struct Command* command, struct Shell* shel
 		break;
 	case 0:
 		//this is the child
-		setDefaultStreams();
-		initializeChildSignalHandler();
+		//assigns and deals with input/output redirection
 		files = handleFiles(command);
+		initializeChildSignalHandler();
+		
 		if (files < 0) {
 			exit(EXIT_FAILURE);
 		}
-		execvp(command->command, newArgs);
+		execvp(newArgs[0], newArgs);
 		perror(command->command);
 		_exit(EXIT_FAILURE);
 		break;
@@ -510,59 +574,89 @@ void handleAdvancedCommandBackground(struct Command* command, struct Shell* shel
 	freeNewArgs(command, newArgs);
 }
 
-void setDefaultStreams() {
-	int input = open("/dev/null", O_RDONLY);
-	int output = open("/dev/null", O_WRONLY | O_TRUNC | O_CREAT,FILE_PERMISSIONS);
-	dup2(input, 0);
-	dup2(output, 1);
-}
-
+/*
+** Description: Uses dup2 to reassign stdin and stdout based on user input in command
+** Prerequisites: Command is allocated
+** Updated/Returned: Ifuser has specified files, input/output is redirected. If command running in background, input/output set to default /dev/null
+*/
 int handleFiles(struct Command* command) {
+
 	if (!(command->input_file) && !(command->output_file)) {
+		if (command->background_execute) {
+			setDefaultInput();
+			setDefaultOutput();
+		}
 		return 1;
 	}
+
 	if (command->input_file) {
 		int inputFile = open(command->input_file, O_RDONLY,FILE_PERMISSIONS);
-		if (inputFile == -1) {
+		if (inputFile < 0) {
 			printf("cannot open %s for input\n", command->input_file);
-			return -1;
+			return inputFile;
 		}
 		dup2( inputFile,0);
 	}
+	else if (command->background_execute) {
+		//setting default input
+		if (DEBUG) printf("assigning default input\n");
+		setDefaultInput();
+	}
 	if (command->output_file) {
-		if (DEBUG)
-			printf("assigning output file\n");
+		
 		int output_file = open(command->output_file, O_WRONLY | O_TRUNC | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
-		if (output_file == -1) {
+		if (output_file < 0) {
 			printf("cannot open %s for output\n", command->output_file);
-			return -1;
+			return output_file;
 		}
 		dup2(output_file,1);
 
 	}
+	else if (command->background_execute) {
+		if (DEBUG) printf("assigning default output\n");
+		//setting default output for background processes
+		setDefaultOutput();
+	}
 	return 0;
-
-
 }
 
+/*
+** Description: Sets default input to null
+** Prerequisites: None
+** Updated/Returned: stdin is reassigned to null
+*/
+void setDefaultInput() {
+	int input = open("/dev/null", O_RDONLY);
+	dup2(input, 0);
+}
+
+/*
+** Description: Sets default output to null
+** Prerequisites: None
+** Updated/Returned: stdout is reassigned to null
+*/
+void setDefaultOutput() {
+	int output = open("/dev/null", O_WRONLY | O_TRUNC | O_CREAT, FILE_PERMISSIONS);
+	dup2(output, 1);
+}
+
+/*
+** Description: Updates signal status held in shell based on how the child process exited. 
+** Prerequisites: shell is allocated
+** Updated/Returned: status in shell is updated to hold correct value. Prints status if child process exited from background by signal.
+*/
 void handleStatusSignal(int status, struct Shell* shell,bool background) {
+	assert(shell);
 	if (WIFEXITED(status) != 0) {
-		if (DEBUG) {
-			printf("exited normally\n");
-		}
 		shell->status = WEXITSTATUS(status);
 		shell->lastExitedByStatus = true;
 		shell->lastExitedBySignal = false;
-		
 	}
 	else {
-		if (DEBUG)
-			printf("exited with signal\n");
+
 		shell->status = WTERMSIG(status);
 		shell->lastExitedBySignal = true;
 		shell->lastExitedByStatus = false;
-		if (DEBUG)
-			printf("Status: %d\n", shell->status);
 		if (!background) {
 			printStatus(shell);
 		}
@@ -572,15 +666,22 @@ void handleStatusSignal(int status, struct Shell* shell,bool background) {
 }
 
 
-
-
-
+/*
+** Description: Creates the new list of args for the exec function, with the function name as the first arg, and null as the last one.
+** Prerequisites: command is allocated
+** Updated/Returned: Returns a string array of args that could be passed to an exec() function.
+*/
 char** createArgsForExec(struct Command* command) {
+	assert(command);
 	char** newArgs = malloc((command->amountOfArgs + 2) * sizeof(char*));
 	int newArgsIndex = 0;
+
+	//sets the first item to be the command.
 	newArgs[newArgsIndex] = malloc(strlen(command->command) + 1);
 	strcpy(newArgs[newArgsIndex], command->command);
 	newArgsIndex++;
+
+	//assigns all the other commands.
 	for (int i = 0; i < command->amountOfArgs; i++) {
 		newArgs[newArgsIndex] = malloc(strlen((command->args)[i]) + 1);
 		strcpy(newArgs[newArgsIndex], (command->args)[i]);
@@ -590,9 +691,15 @@ char** createArgsForExec(struct Command* command) {
 	return newArgs;
 }
 
+/*
+** Description: Frees an string array
+** Prerequisites: command is allocated, newArgs is allocated.
+** Updated/Returned: frees memory held by newArgs
+*/
 void freeNewArgs(struct Command* command, char** newArgs) {
+	assert(command);
 	for (int i = 0; i < command->amountOfArgs + 2; i++) {
-		if (newArgs[i]) {
+		if (newArgs[i]) {		//only free things that exist, i.e. not NULL
 			free(newArgs[i]);
 		}
 	}

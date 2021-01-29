@@ -35,7 +35,7 @@ void setBackgroundExecute(struct Command*, char**);
 void movePastWhiteSpace(char**);
 
 void freeCommand(struct Command*);
-
+void changeDirectory(struct Command*, struct Shell*);
 
 char* readOneWord(char**);
 
@@ -53,5 +53,7 @@ void freeNewArgs(struct Command*,char**);
 void handleStatusSignal(int, struct Shell*,bool background);
 
 int handleFiles(struct Command*);
-void setDefaultStreams();
+
+void setDefaultInput();
+void setDefaultOutput();
 #endif

@@ -2,7 +2,6 @@
 #ifndef SHELL
 #define SHELL
 #include <stdbool.h>
-
 #include <sys/types.h>
 #include <unistd.h> 
 
@@ -31,10 +30,9 @@ void initShell(struct Shell*);
 
 void freeShell(struct Shell*);
 
-void printStatus();
+void printStatus(struct Shell*);
 
 void checkForZombies(struct Shell*);
-
 
 #endif
 
