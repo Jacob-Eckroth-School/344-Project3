@@ -1,4 +1,5 @@
 build/
 smallsh
 p3testscript
+*.zip
 mytestresults

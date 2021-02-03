@@ -112,6 +112,7 @@ void handleShellArgument(char* shellArg, struct Shell* shell) {
 	}
 
 	struct Command* command = parseCommand(shellArg, shell);
+	
 	//no need to handle the command if it's a comment
 	if (command->isComment) {
 		freeCommand(command);
@@ -190,7 +191,7 @@ void killAllProcesses(struct Shell* shell) {
 	assert(shell->backgroundPIDs);
 
 	for (int i = 0; i < shell->backgroundPIDs->size; i++) {
-
+		
 		int childStatus;
 		int PID = (shell->backgroundPIDs->arr)[i];
 		pid_t childID = waitpid(PID, &childStatus, WNOHANG);

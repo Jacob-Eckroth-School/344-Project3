@@ -38,7 +38,7 @@ void initializeParentSignalHandler() {
 	struct sigaction SIGINT_action = { { 0 } };
 	SIGINT_action.sa_handler = SIG_IGN;
 	// Block all catchable signals while handle_SIGINT is running
-	sigaddset(&SIGINT_action.sa_mask, SIGINT);
+	sigfillset(&SIGINT_action.sa_mask);
 	// No flags set
 	SIGINT_action.sa_flags = SA_RESTART;
 
@@ -49,7 +49,7 @@ void initializeParentSignalHandler() {
 	struct sigaction SIGTSTP_action = { { 0 } };
 	SIGTSTP_action.sa_handler = toggleBackground;
 	// Block all catchable signals while handle_SIGINT is running
-	sigaddset(&SIGTSTP_action.sa_mask, SIGTSTP);
+	sigfillset(&SIGTSTP_action.sa_mask);
 	// No flags set
 	SIGTSTP_action.sa_flags = SA_RESTART;
 
@@ -66,9 +66,9 @@ void initializeChildForegroundSignalHandler() {
 	struct sigaction SIGINT_action = { { 0 } };
 	SIGINT_action.sa_handler = SIG_DFL;
 	// Block all catchable signals while handle_SIGINT is running
-	sigaddset(&SIGINT_action.sa_mask, SIGINT);
+	sigfillset(&SIGINT_action.sa_mask);
 	// No flags set
-	SIGINT_action.sa_flags = 0;
+	SIGINT_action.sa_flags = SA_RESTART;
 
 	sigaction(SIGINT, &SIGINT_action, NULL);
 }
@@ -82,9 +82,9 @@ void initializeChildSignalHandler() {
 	struct sigaction SIGTSTP_action = { { 0 } };
 	SIGTSTP_action.sa_handler = SIG_IGN;
 	// Block all catchable signals while handle_SIGINT is running
-	sigaddset(&SIGTSTP_action.sa_mask, SIGTSTP);
+	sigfillset(&SIGTSTP_action.sa_mask);
 	// No flags set
-	SIGTSTP_action.sa_flags = 0;
+	SIGTSTP_action.sa_flags = SA_RESTART;
 
 	sigaction(SIGTSTP, &SIGTSTP_action, NULL);
 }

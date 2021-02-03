@@ -22,6 +22,7 @@
 struct Command* parseCommand(char* command, struct Shell* shell) {
 	assert(command);
 	char* expandedCommand = expandDollarSigns(command, shell);
+
 	char* traveler = expandedCommand;
 	struct Command* newCommand = malloc(sizeof(struct Command));
 	initializeCommand(newCommand);

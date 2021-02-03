@@ -27,12 +27,14 @@ void initArray(struct DynArray* array) {
 ** Updated/Returned: Array has newPID added to the end of it.
 */
 void addToArray(struct DynArray* array, int newPID) {
+	
 	assert(array);
+	(array->arr)[array->size] = newPID;
 	(array->size)++;
 	if (array->size == array->capacity) {
 		resizeArray(array);
 	}
-	(array->arr)[array->size] = newPID;
+	
 	assert(array);
 }
 
