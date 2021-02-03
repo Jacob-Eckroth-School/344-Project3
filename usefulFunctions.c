@@ -62,14 +62,14 @@ char* getUserStringInput(char* prompt, int bufSize) {
 		input = (char*)malloc(bufsize * (sizeof(char)));
 	}
 
-	printf("%s", prompt);
+	printf("%s", prompt); fflush(stdout);
 
-	
+
 	getline(&input, &bufsize, stdin);
 	if (input == NULL) {
 		return NULL;
 	}
-	
+
 	if (DEBUG) {
 		printf("Full Dec of inputted string: ");
 		for (int i = 0; i < strlen(input); i++) {
@@ -77,12 +77,12 @@ char* getUserStringInput(char* prompt, int bufSize) {
 		}
 		printf("\n");
 	}
-	if (strlen(input) == 0){
+	if (strlen(input) == 0) {
 		return NULL;
 	}
 	//if there's a newline character left over in the user input
 	if (input[strlen(input) - 1] == 10) {
-		input[strlen(input) - 1] = 0; 
+		input[strlen(input) - 1] = 0;
 	}
 
 	return input;

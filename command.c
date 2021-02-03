@@ -21,7 +21,7 @@
 */
 struct Command* parseCommand(char* command, struct Shell* shell) {
 	assert(command);
-	char* expandedCommand = expandDollarSigns(command,shell);
+	char* expandedCommand = expandDollarSigns(command, shell);
 	char* traveler = expandedCommand;
 	struct Command* newCommand = malloc(sizeof(struct Command));
 	initializeCommand(newCommand);
@@ -33,7 +33,7 @@ struct Command* parseCommand(char* command, struct Shell* shell) {
 	else {
 
 		setCommand(newCommand, &traveler);
-	
+
 		setArgs(newCommand, &traveler);
 		setInputFile(newCommand, &traveler);
 		setOutputFile(newCommand, &traveler);
@@ -70,7 +70,7 @@ void initializeCommand(struct Command* command) {
 */
 bool checkForComment(char* newCommand) {
 	assert(newCommand);
-	if (strlen(newCommand) < strlen(COMMENTINDICATOR)) {		
+	if (strlen(newCommand) < strlen(COMMENTINDICATOR)) {
 		return false;
 	}
 	if (strncmp(newCommand, COMMENTINDICATOR, strlen(COMMENTINDICATOR)) == 0) {
@@ -118,19 +118,19 @@ void freeCommand(struct Command* command) {
 void setCommand(struct Command* command, char** currentLocationInString) {
 	assert(command);
 	movePastWhiteSpace(currentLocationInString);
-	
+
 	//if there is no command i.e. we're at the end of the string
 	if (**currentLocationInString == 0) {
 		command = NULL;
 		return;
 	}
-	
+
 	//reads the command
 	char* commandString = readOneWord(currentLocationInString);
 
 	command->command = malloc(strlen(commandString) + 1);
 	strcpy(command->command, commandString);
-	
+
 }
 
 
@@ -151,14 +151,14 @@ void setArgs(struct Command* command, char** currentLocationInString) {
 	char* argString = NULL;
 	//loop until we hit one of the next commands.
 	while (**currentLocationInString != IN_FILE_INDICATOR && **currentLocationInString != OUT_FILE_INDICATOR && **currentLocationInString != BACKGROUND_INDICATOR && **currentLocationInString != 0) {
-		
+
 		argString = readOneWord(currentLocationInString);
 		(command->amountOfArgs)++;
 
 		//increases the size of args to hold the new argument
 		command->args = realloc(command->args, (sizeof(char*) * command->amountOfArgs));
 		(command->args)[command->amountOfArgs - 1] = malloc((strlen(argString) + 1) * sizeof(char));
-		strcpy((command->args)[command->amountOfArgs - 1], argString);		
+		strcpy((command->args)[command->amountOfArgs - 1], argString);
 
 		//moves to the next arg
 		movePastWhiteSpace(currentLocationInString);
@@ -173,7 +173,7 @@ void setArgs(struct Command* command, char** currentLocationInString) {
 ** Prerequisites: command is allocated
 ** Updated/Returned: currentLocationInString moved to one after the input file, sets input_file in command struct
 */
-void setInputFile(struct Command* command, char** currentLocationInString){
+void setInputFile(struct Command* command, char** currentLocationInString) {
 	assert(command);
 	movePastWhiteSpace(currentLocationInString);
 
@@ -185,7 +185,7 @@ void setInputFile(struct Command* command, char** currentLocationInString){
 	(*currentLocationInString += 1);
 	movePastWhiteSpace(currentLocationInString);
 	//if there's no file name
-	if (**currentLocationInString == 0){
+	if (**currentLocationInString == 0) {
 		command->input_file = NULL;
 		return;
 	}
@@ -193,7 +193,7 @@ void setInputFile(struct Command* command, char** currentLocationInString){
 		char* inputFileString = readOneWord(currentLocationInString);
 		command->input_file = malloc(strlen(inputFileString) + 1);
 		strcpy(command->input_file, inputFileString);
-	}	
+	}
 }
 
 /*
@@ -236,7 +236,7 @@ void setBackgroundExecute(struct Command* command, char** currentLocationInStrin
 		return;
 	}
 	movePastWhiteSpace(currentLocationInString);
-	
+
 
 	if (**currentLocationInString == 0) {
 		command->background_execute = false;
@@ -261,7 +261,7 @@ void setBackgroundExecute(struct Command* command, char** currentLocationInStrin
 
 
 /*
-** Description: Returns a char* to a string, either up to null or to a space. 
+** Description: Returns a char* to a string, either up to null or to a space.
 ** Prerequisites: currentLocation is pointing to something, hopefully a string
 ** Updated/Returned: currentLocationString is updated along the string, and returns a pointer to the first word
 */
@@ -304,12 +304,12 @@ void movePastWhiteSpace(char** currentLocationInString) {
 char* expandDollarSigns(char* command, struct Shell* shell) {
 
 
-		
+
 	assert(command);
 
 	//returns the required string size of the new string, including null terminator.
-	int newSize = calculateNewSize(command,shell);
-	
+	int newSize = calculateNewSize(command, shell);
+
 	char* newCommand = malloc(sizeof(char) * newSize);
 
 	char* oldCommandIndexer = command;
@@ -331,8 +331,8 @@ char* expandDollarSigns(char* command, struct Shell* shell) {
 			oldCommandIndexer += 1;
 		}
 	}
-	newCommand[newSize-1] = 0;
-	
+	newCommand[newSize - 1] = 0;
+
 
 	free(command);
 	return newCommand;
@@ -349,7 +349,7 @@ char* expandDollarSigns(char* command, struct Shell* shell) {
 bool startOfDoubleDollar(char* currentCommandIndexer) {
 	assert(currentCommandIndexer);
 	//if length of string is <= 1 then there is no way it's the start of a $$
-	if (strlen(currentCommandIndexer) <= 1) {	
+	if (strlen(currentCommandIndexer) <= 1) {
 		return false;
 	}
 
@@ -378,16 +378,17 @@ int calculateNewSize(char* command, struct Shell* shell) {
 		if (firstDollarSignFound) {
 			if (command[i] == '$') {			//if the previous was a dollar and the current is as well
 				amountOfDoubleDollarSigns++;
-				
+
 			}
 			firstDollarSignFound = false;		//If the first dollar sign was found, and the next character isn't a dollar sign, then we reset our search
-		}else if (command[i] == '$') {
+		}
+		else if (command[i] == '$') {
 			firstDollarSignFound = true;
 		}
 
 	}
 
-	int finalSize = initialSize + (strlen(shell->pidString) - 2) * amountOfDoubleDollarSigns;	
+	int finalSize = initialSize + (strlen(shell->pidString) - 2) * amountOfDoubleDollarSigns;
 	return finalSize;
 }
 
@@ -400,36 +401,36 @@ int calculateNewSize(char* command, struct Shell* shell) {
 void printCommand(struct Command* userCommand) {
 	assert(userCommand);
 	if (userCommand->command) {
-		printf("Command: %s\n", userCommand->command);
-	}
-	if(userCommand->args){
-		printf("Arguments: ");
-	}
-	
-	for (int i = 0; i < userCommand->amountOfArgs; i++) {
-		printf("%s ", (userCommand->args)[i]);	
+		printf("Command: %s\n", userCommand->command); fflush(stdout);
 	}
 	if (userCommand->args) {
-		printf("\n");
+		printf("Arguments: "); fflush(stdout);
+	}
+
+	for (int i = 0; i < userCommand->amountOfArgs; i++) {
+		printf("%s ", (userCommand->args)[i]);	 fflush(stdout);
+	}
+	if (userCommand->args) {
+		printf("\n"); fflush(stdout);
 	}
 	if (userCommand->input_file) {
-		printf("Input File: %s\n", userCommand->input_file);
+		printf("Input File: %s\n", userCommand->input_file); fflush(stdout);
 	}
 	if (userCommand->output_file) {
-		printf("Output File: %s\n", userCommand->output_file);
+		printf("Output File: %s\n", userCommand->output_file); fflush(stdout);
 	}
 	if (userCommand->background_execute) {
-		printf("Executing in background\n");
+		printf("Executing in background\n"); fflush(stdout);
 	}
 	else {
-		printf("Executing in foreground\n");
+		printf("Executing in foreground\n"); fflush(stdout);
 	}
-	
+
 
 }
 
 /*
-** Description: Returns 1 if the command is not one of our basic commands handled by the shell. Returns -1 if the user wants to end, returns 0 otherwise 
+** Description: Returns 1 if the command is not one of our basic commands handled by the shell. Returns -1 if the user wants to end, returns 0 otherwise
 ** Prerequisites: userCommand is allocated
 ** Updated/Returned: Prints out information about the contents of userCommand
 */
@@ -453,7 +454,7 @@ int isBasicCommand(struct Command* command, struct Shell* shell) {
 		printStatus(shell);
 		return 0;
 	}
-	
+
 	return 1;
 
 
@@ -491,8 +492,7 @@ void handleAdvancedCommand(struct Command* command, struct Shell* shell) {
 	assert(shell);
 	//sets up the new args array with the program name at the beginning and NULL at the end
 	char** newArgs = createArgsForExec(command);
-	
-	
+
 
 	pid_t spawnPid = 0;
 	int childStatus = 0;
@@ -521,15 +521,15 @@ void handleAdvancedCommand(struct Command* command, struct Shell* shell) {
 		break;
 	default:
 		//this is the parent
-		
+
 
 		spawnPid = waitpid(spawnPid, &childStatus, 0);
-		
+
 		if (DEBUG)
 			printf("process is finished, status is: %d", childStatus);
 
 		//assigns status signal to shell based on how the process exited.
-		handleStatusSignal(childStatus, shell,false);
+		handleStatusSignal(childStatus, shell, false);
 	}
 	//frees the allocated arguments because reasons.
 	freeNewArgs(command, newArgs);
@@ -546,7 +546,7 @@ void handleAdvancedCommandBackground(struct Command* command, struct Shell* shel
 	//sets up the new args array with the program name at the beginning and NULL at the end
 	char** newArgs = createArgsForExec(command);
 	pid_t spawnPid = 0;
-	
+
 	spawnPid = fork();
 	int files;
 	(shell->backgroundProcessesRunning)++;
@@ -560,7 +560,7 @@ void handleAdvancedCommandBackground(struct Command* command, struct Shell* shel
 		//assigns and deals with input/output redirection
 		files = handleFiles(command);
 		initializeChildSignalHandler();
-		
+
 		if (files < 0) {
 			exit(EXIT_FAILURE);
 		}
@@ -569,8 +569,8 @@ void handleAdvancedCommandBackground(struct Command* command, struct Shell* shel
 		_exit(EXIT_FAILURE);
 		break;
 	}
-	printf("background pid is %d\n", spawnPid);
-
+	printf("background pid is %d\n", spawnPid); fflush(stdout);
+	addToArray(shell->backgroundPIDs, spawnPid);
 	freeNewArgs(command, newArgs);
 }
 
@@ -592,10 +592,10 @@ int handleFiles(struct Command* command) {
 	if (command->input_file) {
 		int inputFile = open(command->input_file, O_RDONLY);
 		if (inputFile < 0) {
-			printf("cannot open %s for input\n", command->input_file);
+			printf("cannot open %s for input\n", command->input_file); fflush(stdout);
 			return inputFile;
 		}
-		dup2( inputFile,0);
+		dup2(inputFile, 0);
 	}
 	else if (command->background_execute) {
 		//setting default input
@@ -603,13 +603,13 @@ int handleFiles(struct Command* command) {
 		setDefaultInput();
 	}
 	if (command->output_file) {
-		
+
 		int output_file = open(command->output_file, O_WRONLY | O_TRUNC | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
 		if (output_file < 0) {
-			printf("cannot open %s for output\n", command->output_file);
+			printf("cannot open %s for output\n", command->output_file); fflush(stdout);
 			return output_file;
 		}
-		dup2(output_file,1);
+		dup2(output_file, 1);
 
 	}
 	else if (command->background_execute) {
@@ -641,11 +641,11 @@ void setDefaultOutput() {
 }
 
 /*
-** Description: Updates signal status held in shell based on how the child process exited. 
+** Description: Updates signal status held in shell based on how the child process exited.
 ** Prerequisites: shell is allocated
 ** Updated/Returned: status in shell is updated to hold correct value. Prints status if child process exited from background by signal.
 */
-void handleStatusSignal(int status, struct Shell* shell,bool background) {
+void handleStatusSignal(int status, struct Shell* shell, bool background) {
 	assert(shell);
 	if (WIFEXITED(status) != 0) {
 		shell->status = WEXITSTATUS(status);
@@ -660,8 +660,8 @@ void handleStatusSignal(int status, struct Shell* shell,bool background) {
 		if (!background) {
 			printStatus(shell);
 		}
-		
-		
+
+
 	}
 }
 

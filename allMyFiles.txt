@@ -1,0 +1,15 @@
+  706  2504 21163 command.c
+   71   169  1453 DynArray.c
+    4    19   142 globals.c
+   21    91   662 main.c
+  205   630  5511 shell.c
+   92   300  2597 signals.c
+  101   386  2726 usefulFunctions.c
+   59   117  1399 command.h
+   21    35   359 DynArray.h
+    7    10   101 globals.h
+   42    61   682 shell.h
+   12    13   206 signals.h
+   21    41   412 typeDefs.h
+   14    20   256 usefulFunctions.h
+ 1376  4396 37669 total

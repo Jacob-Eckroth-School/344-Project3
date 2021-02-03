@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <sys/types.h>
 #include <unistd.h> 
-
+#include "DynArray.h"
 struct Shell {
 	bool isRunning;
 	pid_t pid;
@@ -16,6 +16,7 @@ struct Shell {
 	bool lastExitedByStatus;
 	bool lastExitedBySignal;
 	int backgroundProcessesRunning;
+	struct DynArray* backgroundPIDs;
 };
 
 
@@ -33,6 +34,8 @@ void freeShell(struct Shell*);
 void printStatus(struct Shell*);
 
 void checkForZombies(struct Shell*);
+void killAllProcesses(struct Shell*);
+
 
 #endif
 
