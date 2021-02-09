@@ -12,6 +12,14 @@ struct Shell {
 	char* cwd;
 	char* homeDirectory;
 	int status;
+
+
+	//these 3 are here just to print things, they don't actually set the status for the "status" command
+	int printStatus;
+	bool lastExitedStatusPrintStatus;
+	bool lastExitedSignalPrintStatus;
+
+
 	int signalTerminated;
 	bool lastExitedByStatus;
 	bool lastExitedBySignal;

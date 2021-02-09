@@ -20,11 +20,15 @@ void toggleBackground(int sigNumber) {
 
 	background_enabled = !background_enabled;
 	if (background_enabled) {
-		write(STDOUT_FILENO, "\nExiting foreground-only mode\n:", 31); fflush(stdout);
+		write(STDOUT_FILENO, "\nExiting foreground-only mode\n", 30); fflush(stdout);
 	}
 	else {
-		write(STDOUT_FILENO, "\nEntering foreground-only mode (& is now ignored)\n:", 52); fflush(stdout);
+		write(STDOUT_FILENO, "\nEntering foreground-only mode (& is now ignored)\n", 51); fflush(stdout);
+	}
 
+	//we need to reprompt if it's not a foreground process.
+	if (!foreground_executing) {
+		write(STDOUT_FILENO, ":", 2); fflush(stdout);
 	}
 
 }

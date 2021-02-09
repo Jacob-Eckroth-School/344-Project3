@@ -514,6 +514,7 @@ void handleAdvancedCommand(struct Command* command, struct Shell* shell) {
 		if (files < 0) {
 			exit(EXIT_FAILURE);
 		}
+		foreground_executing = true;
 		execvp(newArgs[0], newArgs);
 
 		//if we messed up, print why we messed up
@@ -523,9 +524,9 @@ void handleAdvancedCommand(struct Command* command, struct Shell* shell) {
 	default:
 		//this is the parent
 
-
+		foreground_executing = true;
 		spawnPid = waitpid(spawnPid, &childStatus, 0);
-
+		foreground_executing = false;
 		if (DEBUG)
 			printf("process is finished, status is: %d", childStatus);
 
@@ -648,21 +649,39 @@ void setDefaultOutput() {
 */
 void handleStatusSignal(int status, struct Shell* shell, bool background) {
 	assert(shell);
-	if (WIFEXITED(status) != 0) {
-		shell->status = WEXITSTATUS(status);
-		shell->lastExitedByStatus = true;
-		shell->lastExitedBySignal = false;
-	}
-	else {
 
-		shell->status = WTERMSIG(status);
-		shell->lastExitedBySignal = true;
-		shell->lastExitedByStatus = false;
-		if (!background) {
-			printStatus(shell);
+	//if it's in the background we'll only print it, not update the actual status.
+	if (background) {
+		if (WIFEXITED(status) != 0) {
+			shell->printStatus = WEXITSTATUS(status);
+			shell->lastExitedStatusPrintStatus = true;
+			shell->lastExitedSignalPrintStatus = false;
 		}
+		else {
+
+			shell->printStatus = WTERMSIG(status);
+			shell->lastExitedSignalPrintStatus = true;
+			shell->lastExitedStatusPrintStatus = false;
+		}
+	}else{
+		//we want to update the actual status, not just print it if its in the foreground
+		if (WIFEXITED(status) != 0) {
+			shell->status = shell->printStatus = WEXITSTATUS(status);
+			shell->lastExitedByStatus = shell->lastExitedStatusPrintStatus = true;
+			shell->lastExitedBySignal = shell->lastExitedSignalPrintStatus = false;
+
+		}
+		else {
+
+			shell->status = shell->printStatus = WTERMSIG(status);
+			shell->lastExitedBySignal = shell->lastExitedSignalPrintStatus = true;
+			shell->lastExitedByStatus = shell->lastExitedStatusPrintStatus = false;
+			if (!background) {
+				printStatus(shell);
+			}
 
 
+		}
 	}
 }
 

@@ -53,6 +53,9 @@ void initShell(struct Shell* shell) {
 	shell->signalTerminated = 0;
 	shell->lastExitedByStatus = true;
 	shell->lastExitedBySignal = false;
+	shell->lastExitedSignalPrintStatus = false;
+	shell->lastExitedStatusPrintStatus = true;
+	shell->printStatus = 0;
 
 	//initializing shell pid and current working directory
 	shell->pid = getpid();
@@ -172,12 +175,16 @@ void checkForZombies(struct Shell* shell) {
 */
 void printStatus(struct Shell* shell) {
 	assert(shell);
-	if (shell->lastExitedByStatus) {
-		printf("%s %d\n", EXIT_STATUS_STRING, shell->status); fflush(stdout);
+	if (shell->lastExitedStatusPrintStatus) {
+		printf("%s %d\n", EXIT_STATUS_STRING, shell->printStatus); fflush(stdout);
 	}
-	else if (shell->lastExitedBySignal) {
-		printf("%s %d\n", TERMINATED_STRING, shell->status); fflush(stdout);
+	else if (shell->lastExitedSignalPrintStatus) {
+		printf("%s %d\n", TERMINATED_STRING, shell->printStatus); fflush(stdout);
 	}
+	//resetting print statuses to the shell statuses. 
+	shell->printStatus = shell->status;
+	shell->lastExitedSignalPrintStatus = shell->lastExitedBySignal;
+	shell->lastExitedStatusPrintStatus = shell->lastExitedByStatus;
 }
 
 
